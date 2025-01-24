@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publications Manager</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #sidebar {
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+        }
+
+        #content {
+            margin-left: 260px;
+            padding: 15px;
+        }
+
+        #toggle-sidebar {
+            margin-left: 10px;
+        }
+
+        #lab-image {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            max-width: 150px;
+            max-height: 150px;
+        }
+
+        #footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: gray;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <!-- Lab Image -->
+        <img id="lab-image" src="https://labmm.org/wp-content/uploads/2024/08/MMFV1-PNG.webp" alt="Lab Logo">
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <h4>Publication Form</h4>
+            <form action="/add_update" method="POST">
+                <input type="hidden" name="id" id="pub-id">
+
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="type" class="form-label">Type</label>
+                    <select class="form-select" id="type" name="type">
+                        <option value="manuscript">Manuscript</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="project" class="form-label">Project</label>
+                    <input type="text" class="form-control" id="project" name="project">
+                </div>
+
+                <div class="mb-3">
+                    <label for="journal" class="form-label">Journal</label>
+                    <input type="text" class="form-control" id="journal" name="journal">
+                </div>
+
+                <!-- Button to toggle the Bing search iframe -->
+                <div class="mb-3">
+                    <button type="button" class="btn btn-info" id="check-if-btn">Check Impact Factor</button>
+                </div>
+
+                <!-- Iframe for Bing search -->
+                <div class="mb-3" id="bing-iframe-container" style="display: none;">
+                    <button type="button" class="btn btn-secondary mb-2" id="hide-if-btn">Hide</button>
+                    <iframe id="bing-iframe" style="width: 100%; height: 300px; border: 1px solid #ddd;"></iframe>
+                </div>
+                <div class="mb-3">
+                    <label for="authors" class="form-label">Authors</label>
+                    <input type="text" class="form-control" id="authors" name="authors">
+                </div>
+
+                <div class="mb-3">
+                    <label for="submission_date" class="form-label">Submission Date</label>
+                    <input type="date" class="form-control" id="submission_date" name="submission_date"
+                        value="{{datetime.date.today().isoformat()}}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status">
+                        {% for status in statuses %}
+                        <option value="{{ status }}">{{ status }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="observation" class="form-label">Observation</label>
+                    <textarea class="form-control" id="observation" name="observation" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+            </form>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content">
+            <button class="btn btn-secondary mb-3" id="toggle-sidebar">Toggle Sidebar</button>
+            
+            <!-- APA CV Section -->
+            <div id="cv-container" style="display: none; margin-bottom: 20px;">
+                <button class="btn btn-secondary mb-2" id="toggle-cv">Hide</button>
+                <div id="cv-output" class="border p-3" style="background-color: #f8f9fa;"></div>
+            </div>
+
+            <!-- Button to write the CV -->
+            <button class="btn btn-primary mb-3" id="write-cv">Write CV</button>
+
+            <!-- Publications Table -->
+            <h2 class="text-center">Publications</h2>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Project</th>
+                        <th>Journal</th>
+                        <th>Authors</th>
+                        <th>Submission Date</th>
+                        <th>Status</th>
+                        <th>Observation</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pub in publications.itertuples() %}
+                    <tr>
+                        <td>{{ pub.ID }}</td>
+                        <td>{{ pub.Title }}</td>
+                        <td>{{ pub.Type }}</td>
+                        <td>{{ pub.Project }}</td>
+                        <td>{{ pub.Journal }}</td>
+                        <td>{{ pub.Authors }}</td>
+                        <td>{{ pub.SubmissionDate }}</td>
+                        <td>{{ pub.Status }}</td>
+                        <td>{{ pub.Observation|safe }}</td>
+                        <td>
+                            <button class="btn btn-info btn-sm edit-btn" data-id="{{ pub.ID }}"
+                                data-title="{{ pub.Title }}" data-type="{{ pub.Type }}" data-project="{{ pub.Project }}"
+                                data-journal="{{ pub.Journal }}" data-authors="{{ pub.Authors }}"
+                                data-submission_date="{{ pub.SubmissionDate }}" data-status="{{ pub.Status }}"
+                                data-observation="{{ pub.Observation }}">Edit</button>
+                            <form action="/delete/{{ pub.ID }}" method="POST" style="display:inline-block;">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Footer Text -->
+            <div id="footer">
+                Made by Luis Anunciacao using Flask
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle button
+        $("#toggle-sidebar").click(function () {
+            const sidebar = $("#sidebar");
+            sidebar.toggle();
+            const content = $("#content");
+            if (sidebar.is(":visible")) {
+                content.css("margin-left", "260px");
+            } else {
+                content.css("margin-left", "0");
+            }
+        });
+
+        // Event listener for the "Check Impact Factor" button
+        $("#check-if-btn").click(function () {
+            const journal = $("#journal").val(); // Get the journal name from the input field
+            if (journal.trim() === "") {
+                alert("Please enter a journal name first.");
+                return;
+            }
+
+            const query = encodeURIComponent(`what's the impact factor of ${journal}`);
+            const bingSearchUrl = `https://www.bing.com/search?q=${query}`;
+
+            // Set the iframe's source to the Bing search URL
+            $("#bing-iframe").attr("src", bingSearchUrl);
+
+            // Show the iframe container
+            $("#bing-iframe-container").show();
+        });
+
+        // Event listener for the "Hide" button
+        $("#hide-if-btn").click(function () {
+            // Hide the iframe container
+            $("#bing-iframe-container").hide();
+        });
+
+
+        // Handle the "Write CV" button click
+        $("#write-cv").click(function () {
+            // Make an AJAX request to fetch the APA-styled text
+            $.get("/generate_apa", function (data) {
+                $("#cv-output").html(data.apa); // Add the APA content
+                $("#cv-container").show(); // Show the CV container
+                $("#write-cv").hide(); // Hide the "Write CV" button
+            });
+        });
+
+        // Handle the "Hide" button in the CV container
+        $("#toggle-cv").click(function () {
+            $("#cv-container").hide(); // Hide the CV container
+            $("#write-cv").show(); // Show the "Write CV" button
+        });
+
+        // Load data into the sidebar for editing
+        $(".edit-btn").click(function () {
+            const data = $(this).data();
+            $("#pub-id").val(data.id);
+            $("#title").val(data.title);
+            $("#type").val(data.type);
+            $("#project").val(data.project);
+            $("#journal").val(data.journal);
+            $("#authors").val(data.authors);
+            $("#submission_date").val(data.submission_date);
+            $("#status").val(data.status);
+            $("#observation").val(data.observation);
+
+            // Ensure the sidebar is visible
+            $("#sidebar").show();
+            $("#content").css("margin-left", "260px");
+        });
+    </script>
+</body>
+
+</html>
