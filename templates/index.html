@@ -6,8 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Publications Manager</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <style>
         #sidebar {
             height: 100vh;
@@ -44,13 +46,20 @@
             font-size: 14px;
             color: gray;
         }
+
+        #publications-table tbody tr:hover {
+            background-color: #f2f2f2;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
     <div>
         <!-- Lab Image -->
-        <img id="lab-image" src="https://labmm.org/wp-content/uploads/2024/08/MMFV1-PNG.webp" alt="Lab Logo">
+        <a href="https://www.labmm.org" target="_blank">
+            <img id="lab-image" src="https://labmm.org/wp-content/uploads/2024/08/MMFV1-PNG.webp" alt="Lab Logo">
+        </a>
 
         <!-- Sidebar -->
         <div id="sidebar">
@@ -123,7 +132,7 @@
         <!-- Main Content -->
         <div id="content">
             <button class="btn btn-secondary mb-3" id="toggle-sidebar">Toggle Sidebar</button>
-            
+
             <!-- APA CV Section -->
             <div id="cv-container" style="display: none; margin-bottom: 20px;">
                 <button class="btn btn-secondary mb-2" id="toggle-cv">Hide</button>
@@ -135,7 +144,7 @@
 
             <!-- Publications Table -->
             <h2 class="text-center">Publications</h2>
-            <table class="table table-bordered">
+            <table id="publications-table" class="table table-bordered table-striped table-hover">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -163,13 +172,15 @@
                         <td>{{ pub.Status }}</td>
                         <td>{{ pub.Observation|safe }}</td>
                         <td>
-                            <button class="btn btn-info btn-sm edit-btn" data-id="{{ pub.ID }}"
+                            <button class="btn btn-sm btn-secondary move-up">↑</button>
+                            <button class="btn btn-sm btn-secondary move-down">↓</button>
+                            <br><button class="btn btn-info btn-sm edit-btn" data-id="{{ pub.ID }}"
                                 data-title="{{ pub.Title }}" data-type="{{ pub.Type }}" data-project="{{ pub.Project }}"
                                 data-journal="{{ pub.Journal }}" data-authors="{{ pub.Authors }}"
                                 data-submission_date="{{ pub.SubmissionDate }}" data-status="{{ pub.Status }}"
-                                data-observation="{{ pub.Observation }}">Edit</button>
+                                data-observation="{{ pub.Observation }}">E</button>
                             <form action="/delete/{{ pub.ID }}" method="POST" style="display:inline-block;">
-                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                <button type="submit" class="btn btn-danger btn-sm">D</button>
                             </form>
                         </td>
                     </tr>
@@ -182,9 +193,18 @@
                 Made by Luis Anunciacao using Flask
             </div>
         </div>
-    </div>
-
+    </div>    
     <script>
+        // Initialize DataTables
+        $(document).ready(function () {
+            $('#publications-table').DataTable({
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true
+            });
+        });
+
         // Sidebar toggle button
         $("#toggle-sidebar").click(function () {
             const sidebar = $("#sidebar");
@@ -220,8 +240,6 @@
             // Hide the iframe container
             $("#bing-iframe-container").hide();
         });
-
-
         // Handle the "Write CV" button click
         $("#write-cv").click(function () {
             // Make an AJAX request to fetch the APA-styled text
@@ -236,6 +254,17 @@
         $("#toggle-cv").click(function () {
             $("#cv-container").hide(); // Hide the CV container
             $("#write-cv").show(); // Show the "Write CV" button
+        });
+
+        // Handle "Move Up" and "Move Down" buttons
+        $(document).on('click', '.move-up', function () {
+            const row = $(this).closest('tr');
+            row.prev().before(row); // Move the row up
+        });
+
+        $(document).on('click', '.move-down', function () {
+            const row = $(this).closest('tr');
+            row.next().after(row); // Move the row down
         });
 
         // Load data into the sidebar for editing
