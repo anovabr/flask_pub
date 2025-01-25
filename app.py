@@ -9,7 +9,7 @@ app = Flask(__name__)
 # Detect environment and configure the database URL
 if os.getenv("RENDER_ENV"):
     # Running on Render, use the provided DATABASE_URL
-    DATABASE_URL = os.getenv("DATABASE_URL")
+    DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://flask_user:Psico123@localhost:5432/flask_pub")
 else:
     # Running locally, use local PostgreSQL
     DATABASE_URL = "postgresql://flask_user:Psico123@localhost:5432/flask_pub"
