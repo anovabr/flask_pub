@@ -107,7 +107,8 @@
 
                 <div class="mb-3">
                     <label for="submission_date" class="form-label">Submission Date</label>
-                    <input type="date" class="form-control" id="submission_date" name="submission_date">
+                    <input type="date" class="form-control" id="submission_date" name="submission_date"
+                        value="{{datetime.date.today().isoformat()}}">
                 </div>
 
                 <div class="mb-3">
@@ -159,30 +160,29 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for pub in publications %}
+                    {% for pub in publications.itertuples() %}
                     <tr>
-                        <td>{{ pub[0] }}</td>
-                        <td>{{ pub[1] }}</td>
-                        <td>{{ pub[2] }}</td>
-                        <td>{{ pub[3] }}</td>
-                        <td>{{ pub[4] }}</td>
-                        <td>{{ pub[5] }}</td>
-                        <td>{{ pub[6] }}</td>
-                        <td>{{ pub[7] }}</td>
-                        <td>{{ pub[8]|safe }}</td>
+                        <td>{{ pub.ID }}</td>
+                        <td>{{ pub.Title }}</td>
+                        <td>{{ pub.Type }}</td>
+                        <td>{{ pub.Project }}</td>
+                        <td>{{ pub.Journal }}</td>
+                        <td>{{ pub.Authors }}</td>
+                        <td>{{ pub.SubmissionDate }}</td>
+                        <td>{{ pub.Status }}</td>
+                        <td>{{ pub.Observation|safe }}</td>
                         <td>
-                            <button class="btn btn-sm btn-info edit-btn" data-id="{{ pub[0] }}"
-                                data-title="{{ pub[1] }}" data-type="{{ pub[2] }}" data-project="{{ pub[3] }}"
-                                data-journal="{{ pub[4] }}" data-authors="{{ pub[5] }}"
-                                data-submission_date="{{ pub[6] }}" data-status="{{ pub[7] }}"
-                                data-observation="{{ pub[8] }}">Edit</button>
-                            <form action="/delete/{{ pub[0] }}" method="POST" style="display:inline-block;">
-                                <button type="submit" class="btn btn-sm btn-danger">D</button>
-                            </form>
                             <button class="btn btn-sm btn-secondary move-up">↑</button>
                             <button class="btn btn-sm btn-secondary move-down">↓</button>
+                            <br><button class="btn btn-info btn-sm edit-btn" data-id="{{ pub.ID }}"
+                                data-title="{{ pub.Title }}" data-type="{{ pub.Type }}" data-project="{{ pub.Project }}"
+                                data-journal="{{ pub.Journal }}" data-authors="{{ pub.Authors }}"
+                                data-submission_date="{{ pub.SubmissionDate }}" data-status="{{ pub.Status }}"
+                                data-observation="{{ pub.Observation }}">E</button>
+                            <form action="/delete/{{ pub.ID }}" method="POST" style="display:inline-block;">
+                                <button type="submit" class="btn btn-danger btn-sm">D</button>
+                            </form>
                         </td>
-
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -193,7 +193,7 @@
                 Made by Luis Anunciacao using Flask
             </div>
         </div>
-    </div>
+    </div>    
     <script>
         // Initialize DataTables
         $(document).ready(function () {
@@ -256,13 +256,12 @@
             $("#write-cv").show(); // Show the "Write CV" button
         });
 
-        // Handle "Move Up" button
+        // Handle "Move Up" and "Move Down" buttons
         $(document).on('click', '.move-up', function () {
             const row = $(this).closest('tr');
             row.prev().before(row); // Move the row up
         });
 
-        // Handle "Move Down" button
         $(document).on('click', '.move-down', function () {
             const row = $(this).closest('tr');
             row.next().after(row); // Move the row down
