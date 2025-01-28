@@ -4,28 +4,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Publications Manager - Jan 25</title>
+    <title>Publications Manager</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <style>
+        /* Sidebar Styles */
         #sidebar {
             height: 100vh;
             position: fixed;
-            left: 0;
+            left: -250px; /* Start off-screen */
             top: 0;
             width: 250px;
             background-color: #f8f9fa;
             padding: 15px;
             overflow-y: auto;
             border-right: 1px solid #ddd;
+            transition: left 0.3s ease-in-out; /* Smooth transition */
+        }
+
+        #sidebar.visible {
+            left: 0; /* Bring sidebar into view */
         }
 
         #content {
-            margin-left: 260px;
+            margin-left: 0; /* Start with no margin */
             padding: 15px;
+            transition: margin-left 0.3s ease-in-out; /* Smooth transition */
+        }
+
+        #content.shifted {
+            margin-left: 260px; /* Shift content when sidebar is visible */
         }
 
         #toggle-sidebar {
@@ -58,6 +69,7 @@
                 position: relative;
                 height: auto;
                 border-right: none;
+                left: 0; /* Always visible on small screens */
             }
 
             #content {
@@ -90,7 +102,7 @@
 
         <!-- Sidebar -->
         <div id="sidebar">
-            <h4>Publication Form Jan 25</h4>
+            <h4>Publication Form</h4>
             <form action="/add_update" method="POST">
                 <input type="hidden" name="id" id="pub-id">
 
@@ -159,7 +171,7 @@
 
         <!-- Main Content -->
         <div id="content">
-            <button class="btn btn-secondary mb-3" id="toggle-sidebar">Toggle Sidebar</button>
+            <button class="btn btn-secondary mb-3" id="toggle-sidebar">Add pub.</button>
 
             <!-- APA CV Section -->
             <div id="cv-container" style="display: none; margin-bottom: 20px;">
@@ -239,13 +251,10 @@
         // Sidebar toggle button
         $("#toggle-sidebar").click(function () {
             const sidebar = $("#sidebar");
-            sidebar.toggle();
             const content = $("#content");
-            if (sidebar.is(":visible")) {
-                content.css("margin-left", "260px");
-            } else {
-                content.css("margin-left", "0");
-            }
+
+            sidebar.toggleClass("visible"); // Toggle sidebar visibility
+            content.toggleClass("shifted"); // Shift content
         });
 
         // Event listener for the "Check Impact Factor" button
@@ -314,8 +323,8 @@
             $("#observation").val(data.observation);
 
             // Ensure the sidebar is visible
-            $("#sidebar").show();
-            $("#content").css("margin-left", "260px");
+            $("#sidebar").addClass("visible");
+            $("#content").addClass("shifted");
         });
 
         // Clear form button
