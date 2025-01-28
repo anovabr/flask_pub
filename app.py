@@ -1,45 +1,49 @@
 import os
 import re
-import psycopg2
+import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from datetime import datetime
-#update jan 27 2025
+
 app = Flask(__name__)
 
-# Detect environment and configure the database URL
-if os.getenv("RENDER_ENV"):
-    # Running on Render, use the provided DATABASE_URL
-    DATABASE_URL = os.getenv("DATABASE_URL", 
-    "postgresql://postgres.pjrcjfnrtxlrxbdgpdzx:Psico123@aws-0-us-west-1.pooler.supabase.com:6543/postgres")
-else:
-    # Running locally, use local PostgreSQL
-    DATABASE_URL = "postgresql://flask_user:Psico123@localhost:5432/flask_pub"
+# Path to your local SQLite database file
+DATABASE_FILE = "publications.db"
 
 # Function to connect to the database
 def get_db_connection():
-    return psycopg2.connect(DATABASE_URL)
+    """
+    Returns a connection to the local SQLite database.
+    """
+    conn = sqlite3.connect(DATABASE_FILE)
+    # By default, sqlite3 returns data as tuples. 
+    # If you want dictionary-like behavior, uncomment the next line:
+    # conn.row_factory = sqlite3.Row
+    return conn
 
 # Initialize the database table
 def initialize_db():
+    """
+    Creates the 'publications' table if it doesn't exist.
+    """
     try:
         with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS publications (
-                        id SERIAL PRIMARY KEY,
-                        title TEXT NOT NULL,
-                        type TEXT NOT NULL,
-                        project TEXT,
-                        journal TEXT,
-                        authors TEXT,
-                        submission_date DATE,
-                        status TEXT,
-                        observation TEXT
-                    );
-                """)
-                conn.commit()
-                print("Database initialized successfully.")
-    except psycopg2.Error as e:
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS publications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    project TEXT,
+                    journal TEXT,
+                    authors TEXT,
+                    submission_date TEXT,
+                    status TEXT,
+                    observation TEXT
+                );
+            """)
+            conn.commit()
+            print("Database initialized successfully.")
+    except sqlite3.Error as e:
         print(f"Database initialization error: {e}")
         raise
 
@@ -51,6 +55,10 @@ STATUS_CHOICES = [
 
 # Helper function to parse dates safely
 def parse_date(date_string):
+    """
+    Safely parse a string in 'YYYY-MM-DD' format into a datetime.date object.
+    Returns None if parsing fails or if the input is empty.
+    """
     if date_string:
         try:
             return datetime.strptime(date_string, '%Y-%m-%d').date()
@@ -60,6 +68,9 @@ def parse_date(date_string):
 
 # Helper function to make links clickable in the observation field
 def make_links_clickable(observation):
+    """
+    Converts URLs in a text string into clickable links.
+    """
     if not isinstance(observation, str):
         return observation  # If it's not a string, return as-is
 
@@ -69,7 +80,7 @@ def make_links_clickable(observation):
     # Replace the match with an HTML <a> tag
     def replace_with_link(match):
         url = match.group(0)
-        # Add http:// if the URL starts with www.
+        # Add http:// if the URL starts with "www."
         if url.startswith("www."):
             url = f"http://{url}"
         return f"<a href='{url}' target='_blank' style='color: blue; text-decoration: underline;'>click here</a>"
@@ -80,15 +91,22 @@ def make_links_clickable(observation):
 @app.route("/")
 def index():
     with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM publications ORDER BY id;")
-            publications = cur.fetchall()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM publications ORDER BY id;")
+        publications = cur.fetchall()
 
     # Make observation links clickable
     publications = [
         (
-            pub[0], pub[1], pub[2], pub[3], pub[4], pub[5],
-            pub[6], pub[7], make_links_clickable(pub[8])
+            pub[0],  # id
+            pub[1],  # title
+            pub[2],  # type
+            pub[3],  # project
+            pub[4],  # journal
+            pub[5],  # authors
+            pub[6],  # submission_date
+            pub[7],  # status
+            make_links_clickable(pub[8])  # observation
         )
         for pub in publications
     ]
@@ -110,23 +128,37 @@ def add_update():
         'observation': request.form.get("observation"),
     }
 
+    # Convert the parsed date object back to a string (YYYY-MM-DD) for storage
+    if data['submission_date']:
+        data['submission_date'] = data['submission_date'].strftime("%Y-%m-%d")
+
     with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            if data['id']:  # Update existing record
-                cur.execute("""
-                    UPDATE publications
-                    SET title = %s, type = %s, project = %s, journal = %s,
-                        authors = %s, submission_date = %s, status = %s, observation = %s
-                    WHERE id = %s;
-                """, (data['title'], data['type'], data['project'], data['journal'],
-                      data['authors'], data['submission_date'], data['status'], data['observation'], data['id']))
-            else:  # Insert new record
-                cur.execute("""
-                    INSERT INTO publications (title, type, project, journal, authors, submission_date, status, observation)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
-                """, (data['title'], data['type'], data['project'], data['journal'],
-                      data['authors'], data['submission_date'], data['status'], data['observation']))
-            conn.commit()
+        cur = conn.cursor()
+        if data['id']:  # Update existing record
+            cur.execute(
+                """
+                UPDATE publications
+                SET title = ?, type = ?, project = ?, journal = ?,
+                    authors = ?, submission_date = ?, status = ?, observation = ?
+                WHERE id = ?;
+                """,
+                (
+                    data['title'], data['type'], data['project'], data['journal'],
+                    data['authors'], data['submission_date'], data['status'], data['observation'], data['id']
+                )
+            )
+        else:  # Insert new record
+            cur.execute(
+                """
+                INSERT INTO publications (title, type, project, journal, authors, submission_date, status, observation)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+                """,
+                (
+                    data['title'], data['type'], data['project'], data['journal'],
+                    data['authors'], data['submission_date'], data['status'], data['observation']
+                )
+            )
+        conn.commit()
 
     return redirect(url_for("index"))
 
@@ -134,9 +166,9 @@ def add_update():
 @app.route("/delete/<int:pub_id>", methods=["POST"])
 def delete(pub_id):
     with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM publications WHERE id = %s;", (pub_id,))
-            conn.commit()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM publications WHERE id = ?;", (pub_id,))
+        conn.commit()
 
     return redirect(url_for("index"))
 
@@ -144,19 +176,22 @@ def delete(pub_id):
 @app.route("/generate_apa")
 def generate_apa():
     with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT authors, title, journal, submission_date, status FROM publications;")
-            publications = cur.fetchall()
+        cur = conn.cursor()
+        cur.execute("SELECT authors, title, journal, submission_date, status FROM publications;")
+        publications = cur.fetchall()
 
     apa_references = []
     for pub in publications:
         authors, title, journal, submission_date, status = pub
-        year = submission_date.year if submission_date else "n.d."
-        apa_references.append(f"{authors} ({year}). <em>{title}</em>. <i>{journal}</i>. [Status: {status}]")
+        submission_date_obj = parse_date(submission_date)
+        year = submission_date_obj.year if submission_date_obj else "n.d."
+        apa_references.append(
+            f"{authors} ({year}). <em>{title}</em>. <i>{journal}</i>. [Status: {status}]"
+        )
 
     return jsonify({"apa": "<br>".join(apa_references)})
 
-# Initialize the database table
+# Initialize the database table at startup
 initialize_db()
 
 # Run the application
