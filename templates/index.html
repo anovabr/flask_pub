@@ -104,7 +104,7 @@
 
         <!-- Sidebar -->
         <div id="sidebar">
-            <h4>Publication side</h4>
+            <h4>Publication</h4>
             <form action="/add_update" method="POST">
                 <input type="hidden" name="id" id="pub-id">
 
@@ -185,7 +185,7 @@
             <button class="btn btn-primary mb-3" id="write-cv">Write CV</button>
 
             <!-- Publications Table -->
-            <h2 class="text-center">Publications (January 27)</h2>
+            <h2 class="text-center">Publications list</h2>
             <div class="table-responsive">
                 <table id="publications-table" class="table table-bordered table-striped table-hover">
                     <thead>
@@ -250,14 +250,22 @@
             });
         });
 
-        // Sidebar toggle button
-        $("#toggle-sidebar").click(function () {
-            const sidebar = $("#sidebar");
-            const content = $("#content");
+// Sidebar toggle button
+    $("#toggle-sidebar").click(function () {
+        const sidebar = $("#sidebar");
+        const content = $("#content");
+        const button = $(this);
 
-            sidebar.toggleClass("visible"); // Toggle sidebar visibility
-            content.toggleClass("shifted"); // Shift content
-        });
+        sidebar.toggleClass("visible"); // Toggle sidebar visibility
+        content.toggleClass("shifted"); // Shift content
+
+        // Toggle button text based on sidebar visibility
+        if (sidebar.hasClass("visible")) {
+            button.text("Hide");
+        } else {
+            button.text("Add pub.");
+        }
+    });
 
         // Event listener for the "Check Impact Factor" button
         $("#check-if-btn").click(function () {
