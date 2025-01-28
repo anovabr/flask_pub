@@ -51,6 +51,33 @@
             background-color: #f2f2f2;
             cursor: pointer;
         }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+                border-right: none;
+            }
+
+            #content {
+                margin-left: 0;
+            }
+
+            #lab-image {
+                position: static;
+                display: block;
+                margin: 0 auto 15px;
+            }
+
+            .table-responsive {
+                overflow-x: auto;
+            }
+
+            #publications-table th, #publications-table td {
+                white-space: nowrap;
+            }
+        }
     </style>
 </head>
 
@@ -125,6 +152,8 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary">Save</button>
+                <!-- Clear Button -->
+                <button type="button" class="btn btn-secondary" id="clear-form">Clear</button>
             </form>
         </div>
 
@@ -143,50 +172,51 @@
 
             <!-- Publications Table -->
             <h2 class="text-center">Publications</h2>
-            <table id="publications-table" class="table table-bordered table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Type</th>
-                        <th>Project</th>
-                        <th>Journal</th>
-                        <th>Authors</th>
-                        <th>Submission Date</th>
-                        <th>Status</th>
-                        <th>Observation</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for pub in publications %}
-                    <tr>
-                        <td>{{ pub[0] }}</td>
-                        <td>{{ pub[1] }}</td>
-                        <td>{{ pub[2] }}</td>
-                        <td>{{ pub[3] }}</td>
-                        <td>{{ pub[4] }}</td>
-                        <td>{{ pub[5] }}</td>
-                        <td>{{ pub[6] }}</td>
-                        <td>{{ pub[7] }}</td>
-                        <td>{{ pub[8]|safe }}</td>
-                        <td>
-                            <button class="btn btn-sm btn-info edit-btn" data-id="{{ pub[0] }}"
-                                data-title="{{ pub[1] }}" data-type="{{ pub[2] }}" data-project="{{ pub[3] }}"
-                                data-journal="{{ pub[4] }}" data-authors="{{ pub[5] }}"
-                                data-submission_date="{{ pub[6] }}" data-status="{{ pub[7] }}"
-                                data-observation="{{ pub[8] }}">Edit</button>
-                            <form action="/delete/{{ pub[0] }}" method="POST" style="display:inline-block;">
-                                <button type="submit" class="btn btn-sm btn-danger">D</button>
-                            </form>
-                            <button class="btn btn-sm btn-secondary move-up">↑</button>
-                            <button class="btn btn-sm btn-secondary move-down">↓</button>
-                        </td>
-
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table id="publications-table" class="table table-bordered table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Project</th>
+                            <th>Journal</th>
+                            <th>Authors</th>
+                            <th>Submission Date</th>
+                            <th>Status</th>
+                            <th>Observation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pub in publications %}
+                        <tr>
+                            <td>{{ pub[0] }}</td>
+                            <td>{{ pub[1] }}</td>
+                            <td>{{ pub[2] }}</td>
+                            <td>{{ pub[3] }}</td>
+                            <td>{{ pub[4] }}</td>
+                            <td>{{ pub[5] }}</td>
+                            <td>{{ pub[6] }}</td>
+                            <td>{{ pub[7] }}</td>
+                            <td>{{ pub[8]|safe }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info edit-btn" data-id="{{ pub[0] }}"
+                                    data-title="{{ pub[1] }}" data-type="{{ pub[2] }}" data-project="{{ pub[3] }}"
+                                    data-journal="{{ pub[4] }}" data-authors="{{ pub[5] }}"
+                                    data-submission_date="{{ pub[6] }}" data-status="{{ pub[7] }}"
+                                    data-observation="{{ pub[8] }}">Edit</button>
+                                <form action="/delete/{{ pub[0] }}" method="POST" style="display:inline-block;">
+                                    <button type="submit" class="btn btn-sm btn-danger">D</button>
+                                </form>
+                                <button class="btn btn-sm btn-secondary move-up">↑</button>
+                                <button class="btn btn-sm btn-secondary move-down">↓</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Footer Text -->
             <div id="footer">
@@ -201,7 +231,8 @@
                 paging: true,
                 searching: true,
                 ordering: true,
-                info: true
+                info: true,
+                responsive: true
             });
         });
 
@@ -240,6 +271,7 @@
             // Hide the iframe container
             $("#bing-iframe-container").hide();
         });
+
         // Handle the "Write CV" button click
         $("#write-cv").click(function () {
             // Make an AJAX request to fetch the APA-styled text
@@ -284,6 +316,20 @@
             // Ensure the sidebar is visible
             $("#sidebar").show();
             $("#content").css("margin-left", "260px");
+        });
+
+        // Clear form button
+        $("#clear-form").click(function () {
+            // Reset the form fields
+            $("#pub-id").val(""); // Clear the hidden ID field
+            $("#title").val("");
+            $("#type").val("manuscript"); // Reset to default value
+            $("#project").val("");
+            $("#journal").val("");
+            $("#authors").val("");
+            $("#submission_date").val("");
+            $("#status").val("In preparation"); // Reset to default value
+            $("#observation").val("");
         });
     </script>
 </body>
