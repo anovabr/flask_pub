@@ -7,7 +7,11 @@ from datetime import datetime
 app = Flask(__name__)
 
 # Path to your local SQLite database file
-DATABASE_FILE = "publications.db"
+# Get the directory where the app.py file is located
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Define the path to the database file relative to the app.py location
+DATABASE_FILE = os.path.join(BASE_DIR, "publications.db")
 
 # Function to connect to the database
 def get_db_connection():
