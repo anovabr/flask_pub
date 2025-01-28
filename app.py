@@ -3,14 +3,14 @@ import re
 import psycopg2
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from datetime import datetime
-#update jan 27
+#update jan 27 2025
 app = Flask(__name__)
 
 # Detect environment and configure the database URL
 if os.getenv("RENDER_ENV"):
     # Running on Render, use the provided DATABASE_URL
     DATABASE_URL = os.getenv("DATABASE_URL", 
-    "postgresql://postgres:Psico123@db.pjrcjfnrtxlrxbdgpdzx.supabase.co:5432/postgres?sslmode=require")
+    "postgresql://postgres.pjrcjfnrtxlrxbdgpdzx:Psico123@aws-0-us-west-1.pooler.supabase.com:6543/postgres")
 else:
     # Running locally, use local PostgreSQL
     DATABASE_URL = "postgresql://flask_user:Psico123@localhost:5432/flask_pub"
