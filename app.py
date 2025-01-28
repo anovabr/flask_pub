@@ -3,7 +3,7 @@ import re
 import psycopg2
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from datetime import datetime
-
+#update jan 27
 app = Flask(__name__)
 
 # Detect environment and configure the database URL
