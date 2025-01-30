@@ -239,16 +239,25 @@
         </div>
     </div>
     <script>
-        // Initialize DataTables
-        $(document).ready(function () {
-            $('#publications-table').DataTable({
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                responsive: true
-            });
-        });
+// Initialize DataTables
+$(document).ready(function () {
+    $('#publications-table').DataTable({
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: true,
+        pageLength: 25, // Show 25 rows by default
+        columnDefs: [
+            { targets: 0, visible: false, searchable: false } // Hide the "ID" column
+        ],
+        rowCallback: function(row, data) {
+            if (data[7] === "Published") { // Column index 7 is "Status"
+                $(row).css("background-color", "#d4edda"); // Light green
+            }
+        }
+    });
+});
 
 // Sidebar toggle button
     $("#toggle-sidebar").click(function () {
